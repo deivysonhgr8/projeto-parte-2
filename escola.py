@@ -1,5 +1,8 @@
 from abc import ABC, abstractmethod
 import pandas as pd
+import random
+import string
+import os
 
 # Interface IPessoa define um contrato
 class IPessoa(ABC):
@@ -95,6 +98,8 @@ class Escola:
         return self._funcionarios
 
     def cadastrar_aluno(self, nome, idade, matricula, serie):
+        if len(str(matricula)) != 8:
+            return False, 'Erro: A matrícula deve ter exatamente 8 dígitos.'
         if any(aluno.matricula == matricula for aluno in self._alunos):
             return False, f'Erro: A matrícula {matricula} já existe.'
         if any(aluno.nome.lower() == nome.lower() for aluno in self._alunos):
@@ -125,3 +130,79 @@ class Escola:
     def gerar_dataframe_funcionarios(self):
         data = [{'Nome': f.nome, 'Idade': f.idade, 'Cargo': f.cargo, 'Vínculo': f.tipo_vinculo, 'Escolaridade': f.escolaridade} for f in self._funcionarios]
         return pd.DataFrame(data)
+
+    def salvar_dados(self):
+        # Salva alunos
+        if self._alunos:
+            df_alunos = self.gerar_dataframe_alunos()
+            df_alunos.to_csv('alunos.csv', index=False)
+        else:
+            if os.path.exists('alunos.csv'):
+                os.remove('alunos.csv')
+        
+        # Salva funcionários
+        if self._funcionarios:
+            df_funcionarios = self.gerar_dataframe_funcionarios()
+            df_funcionarios.to_csv('funcionarios.csv', index=False)
+        else:
+            if os.path.exists('funcionarios.csv'):
+                os.remove('funcionarios.csv')
+
+    def carregar_dados(self):
+        try:
+            # Carrega alunos
+            if os.path.exists('alunos.csv'):
+                df_alunos = pd.read_csv('alunos.csv')
+                for _, row in df_alunos.iterrows():
+                    self.cadastrar_aluno(row['Nome'], row['Idade'], row['Matrícula'], row['Série'])
+            
+            # Carrega funcionários
+            if os.path.exists('funcionarios.csv'):
+                df_funcionarios = pd.read_csv('funcionarios.csv')
+                for _, row in df_funcionarios.iterrows():
+                    self.cadastrar_funcionario(row['Nome'], row['Idade'], row['Cargo'], row['Vínculo'], row['Escolaridade'])
+            return True
+        except Exception as e:
+            print(f"Erro ao carregar dados: {e}")
+            return False
+
+# Função para simular dados e popular a escola
+def simular_dados(escola, num_alunos=100, num_funcionarios=100):
+    # Dados para geração aleatória
+    nomes_comuns = ['Ana', 'Bruno', 'Carla', 'Daniel', 'Eduarda', 'Felipe', 'Gabriela', 'Henrique', 'Isabela', 'João', 'Letícia', 'Marcos', 'Natália', 'Otávio', 'Patrícia', 'Ricardo', 'Sofia', 'Thiago', 'Vitória', 'Pedro']
+    sobrenomes_comuns = ['Silva', 'Santos', 'Oliveira', 'Souza', 'Pereira', 'Ferreira', 'Lima', 'Rodrigues', 'Almeida', 'Costa']
+    series_options = ['6º ano', '7º ano', '8º ano', '9º ano', '1ª série', '2ª série', '3ª série']
+    cargos = ['Professor', 'Secretário', 'Limpeza', 'Porteiro', 'Bibliotecário', 'Merendeira'] # 'Coordenador' removido para ser adicionado manualmente
+    tipos_vinculo = ['CLT', 'PJ', 'Contrato', 'Temporário']
+    escolaridade_options = ['Sem escolaridade', 'Ensino fundamental incompleto', 'Ensino fundamental completo', 'Ensino médio incompleto', 'Ensino médio completo', 'Ensino superior incompleto', 'Ensino superior completo', 'Mestrado', 'Doutorado']
+
+    # Gerar alunos
+    matriculas_usadas = set()
+    for i in range(num_alunos):
+        nome = f"{random.choice(nomes_comuns)} {random.choice(sobrenomes_comuns)}"
+        idade = random.randint(11, 18)
+        
+        matricula = 0
+        while True:
+            matricula = random.randint(10000000, 99999999)
+            if matricula not in matriculas_usadas:
+                matriculas_usadas.add(matricula)
+                break
+        
+        serie = random.choice(series_options)
+        escola.cadastrar_aluno(nome, idade, matricula, serie)
+
+    # Gerar o único coordenador
+    nome_coordenador = f"Maria {random.choice(sobrenomes_comuns)}"
+    idade_coordenador = random.randint(30, 60)
+    escolaridade_coordenador = random.choice(['Ensino superior completo', 'Mestrado', 'Doutorado'])
+    escola.cadastrar_funcionario(nome_coordenador, idade_coordenador, 'Coordenador', 'CLT', escolaridade_coordenador)
+
+    # Gerar os demais funcionários
+    for i in range(num_funcionarios - 1):
+        nome = f"{random.choice(nomes_comuns)} {random.choice(sobrenomes_comuns)}"
+        idade = random.randint(25, 60)
+        cargo = random.choice(cargos)
+        tipo_vinculo = random.choice(tipos_vinculo)
+        escolaridade = random.choice(escolaridade_options)
+        escola.cadastrar_funcionario(nome, idade, cargo, tipo_vinculo, escolaridade)
