@@ -168,4 +168,4 @@ elif opcao == 'Análises Gráficas':
         cargo_count = df_funcionarios['Cargo'].value_counts()
         st.bar_chart(cargo_count, use_container_width=True)
     else:
-        st.info("Nenhum funcionário cadastrado para gerar os gráficos.")
+        st.info("Nenhum funcionário cadastrado para gerar os gráficos.") 

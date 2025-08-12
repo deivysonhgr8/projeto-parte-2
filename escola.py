@@ -205,4 +205,4 @@ def simular_dados(escola, num_alunos=100, num_funcionarios=100):
         cargo = random.choice(cargos)
         tipo_vinculo = random.choice(tipos_vinculo)
         escolaridade = random.choice(escolaridade_options)
-        escola.cadastrar_funcionario(nome, idade, cargo, tipo_vinculo, escolaridade)
+        escola.cadastrar_funcionario(nome, idade, cargo, tipo_vinculo, escolaridade) 
